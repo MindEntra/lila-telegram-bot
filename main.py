@@ -1,8 +1,14 @@
+import os
 import telebot
 from datetime import datetime
 import re
 
-API_TOKEN = 'YOUR_BOT_TOKEN_HERE'  # We'll set this as an environment variable in Railway
+# ✅ Securely pull API token from environment
+API_TOKEN = os.getenv("API_TOKEN")
+
+if not API_TOKEN:
+    raise ValueError("API_TOKEN is missing. Please set it in your environment variables.")
+
 bot = telebot.TeleBot(API_TOKEN)
 
 # In-memory storage
@@ -82,4 +88,5 @@ def search_jw(message):
 def fallback(message):
     bot.reply_to(message, "How can I assist you, Michael?")
 
+# ✅ Use infinite polling to keep Lila active
 bot.infinity_polling()
