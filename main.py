@@ -1,10 +1,10 @@
 import os
 import telebot
-from datetime import datetime
-import re
+from flask import Flask, request
 
 # ✅ Securely pull API token from environment
 API_TOKEN = os.getenv("API_TOKEN")
+WEBHOOK_URL = os.getenv("WEBHOOK_URL")  # Set this to your webhook URL
 
 if not API_TOKEN:
     raise ValueError("API_TOKEN is missing. Please set it in your environment variables.")
@@ -15,6 +15,24 @@ bot = telebot.TeleBot(API_TOKEN)
 todos = []
 contacts = {}
 schedules = []
+
+# Set webhook
+bot.remove_webhook()
+bot.set_webhook(url=WEBHOOK_URL)
+
+# Flask app setup
+app = Flask(__name__)
+
+@app.route('/' + API_TOKEN, methods=['POST'])
+def getMessage():
+    json_str = request.get_json()
+    update = telebot.types.Update.de_json(json_str)
+    bot.process_new_updates([update])
+    return '!', 200
+
+@app.route('/' + API_TOKEN, methods=['GET'])
+def webhook():
+    return 'Webhook is set up!', 200
 
 @bot.message_handler(commands=['start', 'help'])
 def send_welcome(message):
@@ -88,5 +106,6 @@ def search_jw(message):
 def fallback(message):
     bot.reply_to(message, "How can I assist you, Michael?")
 
-# ✅ Use infinite polling to keep Lila active
-bot.infinity_polling()
+# ✅ Start the Flask app
+if __name__ == "__main__":
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
